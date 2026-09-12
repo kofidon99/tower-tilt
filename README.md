@@ -1,128 +1,162 @@
-# Neon Drift
+# Tower Tilt
 
-A one-thumb neon lane racer, built to YouTube Playables spec. Single HTML file,
-no build step, no dependencies, no external network requests at runtime.
+A one-tap stacking game about balance, built to YouTube Playables spec. Single
+HTML file, no build step, no dependencies, no external network requests.
 
 ## Controls
 
-|Action|Touch|Keyboard|
-|-|-|-|
-|Change lane|Tap or swipe left / right|`←` `→` or `A` `D`|
-|Boost|Tap the ring (when charged)|`Space` or `W`|
-|Pause|Pause button|`Esc` or `P`|
-|Mute|Speaker button|`M`|
+One action, everywhere.
 
-## How it plays
+| Action | Touch | Keyboard |
+|---|---|---|
+| Drop a block | Tap anywhere | `Space`, `Enter` or `↓` |
+| Pause | Pause button | `Esc` or `P` |
+| Mute | Speaker button | `M` |
 
-Traffic comes at you down four lanes and never stops. Squeeze past a car and
-you bank a **near miss**, which adds score and builds a combo up to ×9. Energy
-gems charge the **boost** ring; fire it and you become briefly invincible at
-1.55× speed with a doubled multiplier, smashing through anything in the way.
+## The hook — why this isn't a stacking clone
 
-A hit costs a **life**, not the run. You get a couple of seconds of
-invulnerability to recover, your speed drops so the next wave is readable, and
-your combo resets. Green **repair cells** appear on the road and restore a life
-up to the tier's ceiling; at full lives they pay out as score and a full boost
-charge instead. Lives are shown top-left — filled chevrons for what you have,
-hollow for the ceiling you could repair back up to.
+Most stacking games slice the overhang off each block so it shrinks until you
+miss. That mechanic is well-worn, and Playables rejects games that copy an
+existing title without adding anything.
 
-Mechanics arrive one at a time rather than all at once: traffic first, then
-energy, then boost, then repair cells, then lane-changing drifters, then
-two-lane barriers. When each of those starts depends on the tier.
+Tower Tilt does something different: **blocks never shrink, and the failure
+state is toppling, not missing.** Every block keeps the offset you gave it, and
+the game tracks the tower's actual centre of mass. Dashed markers on the
+foundation show how far the load may sit from the base centre; an amber plumb
+line shows where it currently sits. Push the load past the markers and the tower
+is overloaded.
+
+That turns one tap into two decisions at once:
+
+- **Where does this block land?** Overlap the block below by at least 70% or it
+  slides off.
+- **What does it do to the load?** A block placed left of centre pulls the load
+  left. If you're leaning right, that's how you fix it.
+
+And the two pull against each other. A **flush** landing — dead centre on the
+block below — is worth the most points and builds a multiplier, but it doesn't
+correct a lean. Correcting a lean means deliberately placing off-centre and
+throwing your flush run away. That trade is the game.
+
+**Wind** makes balance a standing concern rather than a one-off mistake: past a
+certain height it pushes the load sideways, so even perfect stacking eventually
+has to be counterweighted. An arrow beside the load gauge shows which way.
+
+## When it goes wrong
+
+- **Miss** (less than 70% overlap): the block tumbles away, costs a life.
+- **Overload** (load past the markers): the tower **sheds its top few blocks**,
+  costs a life. That's both what a real overloaded stack does and what actually
+  fixes the problem — the highest blocks carry the most leverage, so shearing
+  them brings the load back over the base. It costs a lot of height, so it
+  stings without ending the run.
+- **Out of lives:** the whole tower comes down.
+
+**Gold blocks** arrive every 13 placements. Land one flush and you get a life
+back, up to the tier's ceiling. The lives row shows hollow markers for that
+ceiling, so you can see whether chasing one is worth it.
 
 ## Difficulty
 
-Three tiers, tuned around **reaction time**. A car spawns about 861 logical
-units above you and closes at `speed × (1 − frac)`, so the window you get to
-read it and move is `861 / (speed × (1 − frac))` seconds. Each tier is built
-backwards from the window it should give at its top speed:
+Three tiers, tuned around the **precision window** — how long the crane spends
+inside the landing zone on each pass. The crane swings sinusoidally, so it's
+fastest dead centre; these are the worst-case numbers, measured there:
 
-||Reaction window|Lives (max)|Traffic|Drifters / barriers|Score|
-|-|-|-|-|-|-|
-|**Cruise**|\~1.4–2.4s|4 (6)|sparser|55s / 95s|×0.7|
-|**Drive**|\~0.9–1.5s|3 (5)|baseline|35s / 60s|×1.0|
-|**Redline**|\~0.7–1.1s|2 (3)|denser|18s / 34s|×1.45|
+| | Land window | Flush window | Lives (max) | Wind from | Score |
+|---|---|---|---|---|---|
+| **Cruise** | ~0.76s | ~0.14s | 4 (6) | height 20 | ×0.7 |
+| **Drive** | ~0.50s | ~0.08s | 3 (5) | height 12 | ×1.0 |
+| **Redline** | ~0.34s | ~0.04s | 2 (3) | height 6 | ×1.45 |
 
-Steering feel is **identical** in all three — `LANE\_SHIFT\_TIME` never changes.
-Difficulty comes from the world, never from sluggish controls, because a game
-that gets harder by becoming less responsive just feels broken.
+Tiers also vary how fast the base's tolerance narrows as you build.
 
-Each tier keeps its own best score, so the tiers can't be gamed against each
-other and picking an easier one costs you nothing.
+**Nothing about the control changes between tiers** — one tap, same response.
+Difficulty comes from the world, never from a worse-feeling input.
 
-**The game also suggests a tier.** Three short runs in a row and it offers the
-gentler one; a long clean run and it offers the faster one. Each direction is
-offered once so it never nags.
+Each tier keeps its own best score and its own tallest tower, so picking an
+easier one costs you nothing. The game also **suggests a tier**: three short
+builds in a row and it offers the gentler one; one tall clean build and it
+offers the faster one. Each direction is offered once so it never nags.
+
+Block width and crane sweep are **fixed logical sizes**, not fractions of the
+viewport, so the game plays identically on a 9:20 phone and a 16:9 desktop.
+Sizing the sweep to the screen would both change the difficulty per device and
+hang the block off the edge of a phone, where you can't aim at it.
+
+## Altitude
+
+The sky is a function of height: warm low haze, then clear blue, then thin high
+atmosphere, then near-space with stars. An altimeter appears on the right once
+the camera starts climbing. It's the progress bar, and it costs nothing.
 
 ## Playables compliance notes
 
-Built against the published requirements:
-
-* **Initial load \~84 KB**, one file. Limit is 30 MB, so there's enormous headroom.
-* **Zero external requests.** No CDN, no web fonts, no analytics, no multiplayer.
-All art is drawn procedurally on canvas; all audio is synthesised with Web
-Audio. Verified automatically in `test/run.js`.
-* **No copyrighted assets.** Nothing is sampled, traced or licensed — there is
-no image or audio file in the bundle at all.
-* **Scales to 1:1, 16:9 and 9:16.** Scale is driven by height so the road keeps
-a constant on-screen size; extra width reveals more city rather than
-stretching gameplay. Screenshots in `test/shots/`.
-* **60 fps** at phone and desktop resolutions, measured under load.
-* **`ytgame.game.firstFrameReady()` then `ytgame.game.gameReady()`**, in that
-order, and `gameReady` only once the menu is actually interactive.
-* **Pause and mute are obeyed immediately.** `ytgame.system.onPause` cancels the
-animation frame outright — no rendering, no gameplay — and zeroes the audio
-master gain. `onAudioEnabledChange` is honoured and in-game mute cannot
-override the platform setting.
-* **Progress is saved through `ytgame.game.saveData` / `loadData`**, falling back
-to `localStorage` only when the SDK is absent.
-* **No ads wired up yet.** Interstitial and rewarded hooks are deliberately left
-out rather than stubbed — add them once the channel is onboarded and the
-portal tells you which placements are supported.
-
-Every SDK call is feature-detected and wrapped in try/catch, so the same file
-runs identically on GitHub Pages, in an artifact, and inside Playables.
-
-## Uploading to the Playables developer portal
-
-`neon-drift-playables.zip` is the bundle to upload once your channel is
-onboarded — it contains `index.html` at the archive root, which is the layout
-the portal expects.
+- **Initial load ~68 KB**, one file. Limit is 30 MB.
+- **Zero external requests.** No CDN, no web fonts, no analytics. All art is
+  drawn procedurally on canvas; all audio is synthesised with Web Audio.
+  Verified automatically in `test/run.js`.
+- **No copyrighted assets** — there is no image or audio file in the bundle.
+- **Scales to 1:1, 16:9 and 9:16.** Screenshots in `test/shots/`.
+- **60 fps** at phone and desktop resolutions, measured under load.
+- **`firstFrameReady()` then `gameReady()`**, in that order, and `gameReady`
+  only once the menu is interactive.
+- **Pause and mute obeyed immediately.** `onPause` cancels the animation frame
+  outright and zeroes the audio master gain; `onAudioEnabledChange` is honoured
+  and in-game mute cannot override the platform setting.
+- **Progress saved through `saveData` / `loadData`**, falling back to
+  `localStorage` only when the SDK is absent.
+- **No ads wired up yet** — add the hooks once the channel is onboarded and the
+  portal says which placements are supported.
 
 ## Repo layout
 
 ```
 index.html                    the whole game
-.nojekyll                     tells GitHub Pages to serve files as-is
-neon-drift-playables.zip      bundle for the developer portal
+.nojekyll                     serve files as-is
+tower-tilt-playables.zip      bundle for the developer portal
 src/body.html                 source of truth (title + style + markup + script)
 build.js                      wraps src/body.html into index.html
 test/run.js                   aspect ratios, external requests, pause, perf
 test/sdk.js                   integration against a mocked ytgame SDK
-test/gameplay.js              lives, difficulty tiers, repairs, save migration
-test/shot.js                  screenshot capture at 9:16, 1:1, 16:9
+test/gameplay.js              lives, tiers, balance, gold repairs
+test/shot.js                  screenshot capture
 ```
 
 `node build.js` regenerates `index.html`.
-`node test/run.js \&\& node test/sdk.js \&\& node test/gameplay.js` runs everything.
+`node test/run.js && node test/sdk.js && node test/gameplay.js` runs everything.
 
-### How the gameplay tests work without reaching into the game
+### How the tests work without debug hooks
 
-`test/gameplay.js` deliberately uses no debug hooks. Because a hit destroys the
-obstacle and the run only ends at zero lives, a run that collects no repair cell
-must end with exactly as many hits as the tier grants lives — so the hit count
-on the game-over card proves both that lives work and that each tier starts with
-the right number. Invulnerability is checked as a differential: the same build
-with the grace window removed dies measurably faster under dense traffic.
+The shipped build has no test affordances. The game-over card reports height,
+flushes, misses and shears, and that's enough: a run only ends when lives hit
+zero, and only a miss or a shear costs a life, so **misses + shears must equal
+the tier's starting lives exactly** (plus any gold repairs). That one identity
+proves the whole lives system and each tier's starting count.
 
-## Changelog
+Anything not directly observable is tested as a **differential** — build a
+variant with the feature disabled and assert the outcome measurably differs.
+The balance system is checked that way: two builds that land every block, one
+with a finite base and one with an unbounded one. The bounded build shears and
+stays short; the unbounded one never shears and builds taller. If the
+centre-of-mass calculation were inert, those two would be identical.
 
-**v2** — Lives (3 on Drive) replace instant death, with post-hit invulnerability
-and a speed stumble; green repair cells restore a life; three difficulty tiers
-tuned by reaction time with per-tier best scores; the game suggests a tier based
-on how you're actually doing. Fixed: per-tier spawn density was defined but never
-applied to the spawn timer.
+The automated player taps blind — it can't see where the crane is, so on the
+shipped build it misses most drops, exactly as a person would with their eyes
+shut. Tests that need a tower actually built use a variant with the landing
+window opened up, which still scatters placements across the sweep — precisely
+the input the balance system exists to punish.
 
-**v1** — Endless four-lane racer: traffic, energy, boost, near-miss combos,
-drifters, barriers. Playables SDK bridge, procedural art and audio.
+## Performance notes
 
+Same lessons as Neon Drift, plus one new one:
+
+- **Sprite-cache anything with a shadow.** Canvas `shadowBlur` recomputes per
+  fill.
+- **Never build a gradient per frame.** Cache per layout.
+- **Bake the sky into a small texture and stretch it.** The sky is a smooth
+  gradient plus a soft sun; painting it into a 192×448 offscreen canvas and
+  blitting that stretched is far cheaper than two full-screen gradient fills a
+  frame — one of them radial, which is the most expensive fill there is. This
+  alone was the difference between 30 and 60 fps on a desktop window.
+- **Render-resolution budget:** past ~2.6M device pixels, step density down
+  rather than drop frames.
